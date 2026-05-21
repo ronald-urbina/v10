@@ -8,7 +8,12 @@ function createMediaState(overrides: Partial<MediaPlaybackRateState> = {}): Medi
   return {
     playbackRates: [0.5, 1, 1.5, 2],
     playbackRate: 1,
+    requestedRates: [0.5, 1, 1.5, 2],
+    sourceRates: null,
+    ratesLockedBySource: false,
     setPlaybackRate: vi.fn(),
+    setRequestedRates: vi.fn(),
+    setSourceRates: vi.fn(),
     ...overrides,
   };
 }

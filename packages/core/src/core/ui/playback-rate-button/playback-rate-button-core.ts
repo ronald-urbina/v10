@@ -15,6 +15,8 @@ export interface PlaybackRateButtonProps {
 
 export interface PlaybackRateButtonState extends ButtonState {
   rate: number;
+  rates: readonly number[];
+  ratesLockedBySource: boolean;
 }
 
 export class PlaybackRateButtonCore {
@@ -25,6 +27,8 @@ export class PlaybackRateButtonCore {
 
   readonly state = createState<PlaybackRateButtonState>({
     rate: 1,
+    rates: [],
+    ratesLockedBySource: false,
     label: '',
   });
 
@@ -65,7 +69,11 @@ export class PlaybackRateButtonCore {
 
   getState(): PlaybackRateButtonState {
     const media = this.#media!;
-    this.state.patch({ rate: media.playbackRate });
+    this.state.patch({
+      rate: media.playbackRate,
+      rates: media.playbackRates,
+      ratesLockedBySource: media.ratesLockedBySource,
+    });
     this.state.patch({ label: this.getLabel(this.state.current) });
 
     return this.state.current;

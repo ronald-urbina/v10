@@ -209,7 +209,8 @@ export interface MediaControlsState {
 
 export interface MediaPlaybackRateState {
   /**
-   * Available playback rates.
+   * Effective playback rates — derived from `requestedRates` and `sourceRates`.
+   * This is what UI components (button, menu) read.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/playbackRate
    */
@@ -220,12 +221,30 @@ export interface MediaPlaybackRateState {
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/playbackRate
    */
   playbackRate: number;
+  /** Rates requested by the consumer via `<PlaybackRates>`. */
+  readonly requestedRates: readonly number[];
+  /**
+   * Rates imposed by the active source or plugin. `null` means no constraint.
+   * When set, `playbackRates` becomes the intersection of `requestedRates` and
+   * `sourceRates` (or `sourceRates` alone when the intersection is empty).
+   */
+  readonly sourceRates: readonly number[] | null;
+  /** `true` while `sourceRates` is overriding `requestedRates`. */
+  readonly ratesLockedBySource: boolean;
   /**
    * Set the playback rate.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/playbackRate
    */
   setPlaybackRate(rate: number): void;
+  /** Update the consumer-requested rate list. Called by `<PlaybackRates>`. */
+  setRequestedRates(rates: number[]): void;
+  /**
+   * Constrain available rates to those supported by the active source.
+   * Pass `null` to clear the constraint (e.g. when a source unloads).
+   * Called by source plugins — not by consumer code.
+   */
+  setSourceRates(rates: number[] | null): void;
 }
 
 /**

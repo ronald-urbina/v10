@@ -58,6 +58,7 @@ export {
   type PlaybackRateMenuResult,
   usePlaybackRateMenu,
 } from './ui/playback-rate-menu';
+export { PlaybackRates, type PlaybackRatesProps } from './ui/playback-rates/playback-rates';
 export { Popover, type PopoverContextValue, usePopoverContext } from './ui/popover';
 export { Poster, type PosterProps } from './ui/poster/poster';
 export { SeekButton, type SeekButtonProps } from './ui/seek-button/seek-button';

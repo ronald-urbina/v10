@@ -19,7 +19,16 @@ function renderPlaybackRateMenu({
   setPlaybackRate?: (rate: number) => void;
   formatRate?: (rate: number) => string;
 } = {}) {
-  const { Wrapper } = createPlayerWrapper({ playbackRates, playbackRate, setPlaybackRate });
+  const { Wrapper } = createPlayerWrapper({
+    playbackRates,
+    playbackRate,
+    requestedRates: [...playbackRates],
+    sourceRates: null,
+    ratesLockedBySource: false,
+    setPlaybackRate,
+    setRequestedRates: vi.fn(),
+    setSourceRates: vi.fn(),
+  });
 
   render(
     <PlaybackRateMenu.Root defaultOpen formatRate={formatRate}>
@@ -61,7 +70,16 @@ describe('PlaybackRateMenu', () => {
   });
 
   it('renders the current rate inside a rendered button without children', () => {
-    const { Wrapper } = createPlayerWrapper({ playbackRates: [1, 1.5], playbackRate: 1 });
+    const { Wrapper } = createPlayerWrapper({
+      playbackRates: [1, 1.5],
+      playbackRate: 1,
+      requestedRates: [1, 1.5],
+      sourceRates: null,
+      ratesLockedBySource: false,
+      setPlaybackRate: vi.fn(),
+      setRequestedRates: vi.fn(),
+      setSourceRates: vi.fn(),
+    });
 
     render(
       <PlaybackRateMenu.Root defaultOpen>
@@ -74,7 +92,16 @@ describe('PlaybackRateMenu', () => {
   });
 
   it('preserves children on a rendered button', () => {
-    const { Wrapper } = createPlayerWrapper({ playbackRates: [1, 1.5], playbackRate: 1 });
+    const { Wrapper } = createPlayerWrapper({
+      playbackRates: [1, 1.5],
+      playbackRate: 1,
+      requestedRates: [1, 1.5],
+      sourceRates: null,
+      ratesLockedBySource: false,
+      setPlaybackRate: vi.fn(),
+      setRequestedRates: vi.fn(),
+      setSourceRates: vi.fn(),
+    });
 
     render(
       <PlaybackRateMenu.Root defaultOpen>

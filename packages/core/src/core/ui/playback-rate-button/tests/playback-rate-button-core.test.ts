@@ -8,7 +8,12 @@ function createMediaState(overrides: Partial<MediaPlaybackRateState> = {}): Medi
   return {
     playbackRates: [0.2, 0.5, 0.7, 1, 1.2, 1.5, 1.7, 2],
     playbackRate: 1,
+    requestedRates: [0.2, 0.5, 0.7, 1, 1.2, 1.5, 1.7, 2],
+    sourceRates: null,
+    ratesLockedBySource: false,
     setPlaybackRate: vi.fn(),
+    setRequestedRates: vi.fn(),
+    setSourceRates: vi.fn(),
     ...overrides,
   };
 }
@@ -16,6 +21,8 @@ function createMediaState(overrides: Partial<MediaPlaybackRateState> = {}): Medi
 function createState(overrides: Partial<PlaybackRateButtonState> = {}): PlaybackRateButtonState {
   return {
     rate: 1,
+    rates: [0.2, 0.5, 0.7, 1, 1.2, 1.5, 1.7, 2],
+    ratesLockedBySource: false,
     label: '',
     ...overrides,
   };
@@ -30,6 +37,22 @@ describe('PlaybackRateButtonCore', () => {
       const state = core.getState();
 
       expect(state.rate).toBe(1.5);
+    });
+
+    it('projects playbackRates to rates', () => {
+      const core = new PlaybackRateButtonCore();
+      const media = createMediaState({ playbackRates: [0.5, 1, 1.5] });
+      core.setMedia(media);
+
+      expect(core.getState().rates).toEqual([0.5, 1, 1.5]);
+    });
+
+    it('projects ratesLockedBySource', () => {
+      const core = new PlaybackRateButtonCore();
+      const media = createMediaState({ ratesLockedBySource: true });
+      core.setMedia(media);
+
+      expect(core.getState().ratesLockedBySource).toBe(true);
     });
   });
 

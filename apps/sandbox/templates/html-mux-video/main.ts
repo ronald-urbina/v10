@@ -1,6 +1,7 @@
 import '@app/styles.css';
 import '@videojs/html/video/player';
 import '@videojs/html/media/mux-video';
+import '@videojs/html/ui/playback-rates';
 import { createHtmlSandboxState, createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox-state';
 import { loadVideoSkinTag } from '@app/shared/html/skins';
 import { renderStoryboard } from '@app/shared/html/storyboard';
@@ -31,6 +32,7 @@ async function render() {
 
   document.getElementById('root')!.innerHTML = html`
     <${playerTag}>
+      <media-playback-rates rates="0.5 1 1.5 2"></media-playback-rates>
       <${tag} class="aspect-video max-w-4xl mx-auto">
         <mux-video src="${SOURCES[state.source].url}" debug ${mediaAttrs} playsinline crossorigin="anonymous">
           ${renderStoryboard(storyboard)}

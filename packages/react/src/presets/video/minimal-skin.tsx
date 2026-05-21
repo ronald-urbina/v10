@@ -34,6 +34,7 @@ import { Menu } from '@/ui/menu';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
+import { PlaybackRateButton } from '@/ui/playback-rate-button';
 import { PlaybackRateMenu, usePlaybackRateMenu } from '@/ui/playback-rate-menu';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
@@ -221,6 +222,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                 <PlaybackRateMenuItems />
               </PlaybackRateMenu.Content>
             </PlaybackRateMenu.Root>
+            <PlaybackRateButton />
 
             <VolumePopover />
 

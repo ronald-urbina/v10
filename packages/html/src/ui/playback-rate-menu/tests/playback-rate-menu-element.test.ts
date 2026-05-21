@@ -62,13 +62,16 @@ function createPlaybackRateStore({
 } = {}): AnyPlayerStore {
   return createStore<unknown>()<MediaPlaybackRateState>({
     name: 'playbackRate',
-    state: () => {
-      return {
-        playbackRates,
-        playbackRate,
-        setPlaybackRate,
-      };
-    },
+    state: () => ({
+      playbackRates,
+      playbackRate,
+      requestedRates: [...playbackRates],
+      sourceRates: null,
+      ratesLockedBySource: false,
+      setPlaybackRate,
+      setRequestedRates: vi.fn(),
+      setSourceRates: vi.fn(),
+    }),
   }) as unknown as AnyPlayerStore;
 }
 

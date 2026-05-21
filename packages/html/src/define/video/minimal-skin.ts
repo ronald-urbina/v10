@@ -102,6 +102,11 @@ function getTemplateHTML() {
               </media-playback-rate-options>
             </media-playback-rate-menu>
 
+          <media-playback-rate-button commandfor="playback-rate-tooltip"  class="media-button media-button--subtle media-button--icon media-button--playback-rate"></media-playback-rate-button>
+          <media-tooltip id="playback-rate-tooltip" side="top" class="media-tooltip">
+            Toggle playback rate
+          </media-tooltip>
+
             <media-mute-button commandfor="video-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
               ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
               ${renderIcon('volume-low', { class: 'media-icon media-icon--volume-low' })}

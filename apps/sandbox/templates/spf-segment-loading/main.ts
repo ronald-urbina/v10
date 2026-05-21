@@ -8,8 +8,8 @@ import '@app/styles.css';
 //   autoplay=true        Start with autoplay enabled
 //   preload=auto|metadata|none  Initial preload mode
 
-import { effect, snapshot } from '@videojs/spf';
-import type { SimpleHlsEngineSignals, SimpleHlsEngineState } from '@videojs/spf/hls';
+import { effect } from '@videojs/spf';
+import type { SimpleHlsEngineState } from '@videojs/spf/hls';
 import { createSimpleHlsEngine } from '@videojs/spf/hls';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
@@ -58,8 +58,8 @@ function formatBandwidth(bps: number): string {
   return `${Math.round(bps / 1000)} Kbps`;
 }
 
-function getVideoTracks(presentation: SimpleHlsEngineState['presentation']) {
-  return presentation?.selectionSets?.find((s) => s.type === 'video')?.switchingSets[0]?.tracks ?? [];
+function getVideoTracks(state: SimpleHlsEngineState) {
+  return state.presentation?.selectionSets?.find((s) => s.type === 'video')?.switchingSets[0]?.tracks ?? [];
 }
 
 // ── Display functions ─────────────────────────────────────────────────────────
@@ -77,7 +77,7 @@ function updateShareUrl() {
 
 function updateNowPlayingQuality() {
   if (!engine) return;
-  const segments = engine.context.videoBufferActor.get()?.snapshot.get().context.segments ?? [];
+  const segments = engine.owners.get().videoBufferActor?.snapshot.get().context.segments ?? [];
   const t = video.currentTime;
   const current = segments.find((s) => t >= s.startTime && t < s.startTime + s.duration);
   if (current?.trackBandwidth) {
@@ -100,7 +100,7 @@ function correctedEstimate(estimate: number, totalWeight: number, halfLife: numb
 
 function updateThroughputDisplay() {
   if (!engine) return;
-  const bs = engine.state.bandwidthState.get();
+  const bs = engine.state.get().bandwidthState;
   if (!bs || bs.bytesSampled === 0) {
     throughputDiv.textContent = '📶 Throughput: no samples yet';
     throughputDiv.className = '';
@@ -127,7 +127,7 @@ function renderRenditionPicker() {
   const tracks = getVideoTracks(presentation);
 
   if (tracks.length === 0) {
-    renditionButtonsDiv.textContent = presentation ? 'No video tracks found' : 'Waiting for presentation…';
+    renditionButtonsDiv.textContent = state.presentation ? 'No video tracks found' : 'Waiting for presentation…';
     return;
   }
 
@@ -153,7 +153,7 @@ function renderRenditionPicker() {
   renditionButtonsDiv.appendChild(statusRow);
 
   for (const track of tracks) {
-    const isSelected = track.id === selectedVideoTrackId;
+    const isSelected = track.id === state.selectedVideoTrackId;
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = `rendition-btn${isSelected ? (isManual ? ' selected-manual' : ' selected-abr') : ''}`;
@@ -171,11 +171,11 @@ function renderRenditionPicker() {
 
 function renderResolutionStatus() {
   if (!engine) return;
-  const presentation = engine.state.presentation.get();
-  const tracks = getVideoTracks(presentation);
+  const state = engine.state.get();
+  const tracks = getVideoTracks(state);
 
   if (tracks.length === 0) {
-    resolutionListDiv.textContent = presentation ? 'No video tracks found' : 'Waiting for presentation…';
+    resolutionListDiv.textContent = state.presentation ? 'No video tracks found' : 'Waiting for presentation…';
     return;
   }
 
@@ -196,22 +196,22 @@ function inspectState() {
     stateDiv.innerHTML = '<h2>State Inspector</h2><div class="error">Engine not initialized</div>';
     return;
   }
-  const state = snapshot(engine.state);
-  const ctx = snapshot(engine.context);
+  const state = engine.state.get();
+  const owners = engine.owners.get();
 
-  const videoBufferRanges = ctx.videoBuffer
+  const videoBufferRanges = owners.videoBuffer
     ? Array.from(
-        { length: ctx.videoBuffer.buffered.length },
+        { length: owners.videoBuffer.buffered.length },
         (_, i) =>
-          `Range ${i}: ${ctx.videoBuffer!.buffered.start(i).toFixed(2)}s - ${ctx.videoBuffer!.buffered.end(i).toFixed(2)}s`
+          `Range ${i}: ${owners.videoBuffer!.buffered.start(i).toFixed(2)}s - ${owners.videoBuffer!.buffered.end(i).toFixed(2)}s`
       ).join('\n  ')
     : 'N/A';
 
-  const audioBufferRanges = ctx.audioBuffer
+  const audioBufferRanges = owners.audioBuffer
     ? Array.from(
-        { length: ctx.audioBuffer.buffered.length },
+        { length: owners.audioBuffer.buffered.length },
         (_, i) =>
-          `Range ${i}: ${ctx.audioBuffer!.buffered.start(i).toFixed(2)}s - ${ctx.audioBuffer!.buffered.end(i).toFixed(2)}s`
+          `Range ${i}: ${owners.audioBuffer!.buffered.start(i).toFixed(2)}s - ${owners.audioBuffer!.buffered.end(i).toFixed(2)}s`
       ).join('\n  ')
     : 'N/A';
 
@@ -221,36 +221,36 @@ function inspectState() {
     <h3>Playback State</h3>
     <pre>${JSON.stringify(state, null, 2)}</pre>
 
-    <h3>Context (SourceBuffers)</h3>
-    <div>Video Buffer: ${ctx.videoBuffer ? '✓ Created' : '✗ Not created'}</div>
-    <div>Audio Buffer: ${ctx.audioBuffer ? '✓ Created' : '✗ Not created'}</div>
+    <h3>Owners (SourceBuffers)</h3>
+    <div>Video Buffer: ${owners.videoBuffer ? '✓ Created' : '✗ Not created'}</div>
+    <div>Audio Buffer: ${owners.audioBuffer ? '✓ Created' : '✗ Not created'}</div>
 
     ${
-      ctx.videoBuffer
+      owners.videoBuffer
         ? `
       <h4>Video Buffer State</h4>
-      <div>Buffered ranges: ${ctx.videoBuffer.buffered.length}</div>
+      <div>Buffered ranges: ${owners.videoBuffer.buffered.length}</div>
       <pre>${videoBufferRanges}</pre>
     `
         : ''
     }
 
     ${
-      ctx.audioBuffer
+      owners.audioBuffer
         ? `
       <h4>Audio Buffer State</h4>
-      <div>Buffered ranges: ${ctx.audioBuffer.buffered.length}</div>
+      <div>Buffered ranges: ${owners.audioBuffer.buffered.length}</div>
       <pre>${audioBufferRanges}</pre>
     `
         : ''
     }
 
     <h3>MediaSource State</h3>
-    <div>readyState: ${ctx.mediaSource?.readyState ?? 'N/A'}</div>
+    <div>readyState: ${owners.mediaSource?.readyState ?? 'N/A'}</div>
 
     <h3>Buffer Model (actor context)</h3>
-    <div>Video segments loaded: ${ctx.videoBufferActor?.snapshot.get().context.segments.length ?? 0}</div>
-    <div>Audio segments loaded: ${ctx.audioBufferActor?.snapshot.get().context.segments.length ?? 0}</div>
+    <div>Video segments loaded: ${owners.videoBufferActor?.snapshot.get().context.segments.length ?? 0}</div>
+    <div>Audio segments loaded: ${owners.audioBufferActor?.snapshot.get().context.segments.length ?? 0}</div>
 
     <h3>Video Element State</h3>
     <div>readyState: ${video.readyState}</div>
@@ -267,27 +267,20 @@ log('=== SPF Segment Loading POC Test ===');
 log(`Stream: ${INITIAL_SRC}`);
 
 let engine: ReturnType<typeof createSimpleHlsEngine>;
-let signals: SimpleHlsEngineSignals;
 let cleanupEffects: () => void = () => {};
 
 function startEngine(src: string) {
   cleanupEffects();
   if (engine) engine.destroy();
 
-  engine = createSimpleHlsEngine({
-    initialBandwidth: 1_000_000,
-    onSignalsReady: (refs) => {
-      signals = refs;
-    },
-  });
+  engine = createSimpleHlsEngine({ initialBandwidth: 1_000_000 });
   (window as any).engine = engine;
-  (window as any).signals = signals;
-  (window as any).state = () => snapshot(engine.state);
-  (window as any).context = () => snapshot(engine.context);
+  (window as any).state = () => engine.state.get();
+  (window as any).owners = () => engine.owners.get();
 
   // ── Reactive effects ───────────────────────────────────────────────────────
 
-  // prev/prevContext track one-time transitions for logging purposes.
+  // prev/prevOwners track one-time transitions for logging purposes.
   // They are reset on each startEngine call so a new source logs correctly.
   const prev = {
     hasPresentation: false,
@@ -295,11 +288,11 @@ function startEngine(src: string) {
     selectedAudioTrackId: undefined as string | undefined,
     selectedTextTrackId: undefined as string | undefined,
   };
-  const prevContext = { hasMediaSource: false, hasVideoBuffer: false, hasAudioBuffer: false };
+  const prevOwners = { hasMediaSource: false, hasVideoBuffer: false, hasAudioBuffer: false };
 
   // State logger + auto-select first text track
   const stopStateLogger = effect(() => {
-    const state = snapshot(engine.state);
+    const state = engine.state.get();
 
     if (state.presentation && !prev.hasPresentation) {
       log('Presentation resolved');
@@ -312,9 +305,7 @@ function startEngine(src: string) {
       const firstText = textSet?.switchingSets?.[0]?.tracks?.[0];
       if (firstText) {
         log(`Auto-selecting text track: ${firstText.id}`);
-        // TODO(stage-d): selectedTextTrackId is the deferred reconciler case —
-        // direct write into composition state until intent/state split lands.
-        engine.state.selectedTextTrackId.set(firstText.id);
+        engine.state.set({ ...engine.state.get(), selectedTextTrackId: firstText.id });
       }
     }
 
@@ -335,26 +326,26 @@ function startEngine(src: string) {
 
   // Throughput + rendition picker + resolution status — re-render on any state change
   const stopStateUI = effect(() => {
-    snapshot(engine.state); // track all state changes
+    engine.state.get(); // track all state changes
     updateThroughputDisplay();
     renderRenditionPicker();
     renderResolutionStatus();
   });
 
-  // Context logger
-  const stopContextLogger = effect(() => {
-    const ctx = snapshot(engine.context);
+  // Owners logger
+  const stopOwnersLogger = effect(() => {
+    const owners = engine.owners.get();
 
-    if (ctx.mediaSource && !prevContext.hasMediaSource) {
-      log(`MediaSource created: ${ctx.mediaSource.readyState}`, 'success');
-      prevContext.hasMediaSource = true;
+    if (owners.mediaSource && !prevOwners.hasMediaSource) {
+      log(`MediaSource created: ${owners.mediaSource.readyState}`, 'success');
+      prevOwners.hasMediaSource = true;
     }
-    if (ctx.videoBuffer && !prevContext.hasVideoBuffer) {
+    if (owners.videoBuffer && !prevOwners.hasVideoBuffer) {
       log('Video SourceBuffer created', 'success');
-      prevContext.hasVideoBuffer = true;
+      prevOwners.hasVideoBuffer = true;
 
-      const origRemove = ctx.videoBuffer.remove.bind(ctx.videoBuffer);
-      ctx.videoBuffer.remove = (start: number, end: number) => {
+      const origRemove = owners.videoBuffer.remove.bind(owners.videoBuffer);
+      owners.videoBuffer.remove = (start: number, end: number) => {
         log(
           `📹 Video SourceBuffer.remove(${start.toFixed(2)}s → ${end === Infinity ? '∞' : end.toFixed(2)}s)`,
           'warning'
@@ -362,8 +353,8 @@ function startEngine(src: string) {
         return origRemove(start, end);
       };
 
-      ctx.videoBuffer.addEventListener('updateend', () => {
-        const buf = engine.context.videoBuffer.get();
+      owners.videoBuffer.addEventListener('updateend', () => {
+        const buf = engine.owners.get().videoBuffer;
         if (!buf) return;
         const ranges: string[] = [];
         for (let i = 0; i < buf.buffered.length; i++) {
@@ -372,12 +363,12 @@ function startEngine(src: string) {
         log(`📹 Video buffered: ${ranges.join(' ') || '(empty)'}`, 'info');
       });
     }
-    if (ctx.audioBuffer && !prevContext.hasAudioBuffer) {
+    if (owners.audioBuffer && !prevOwners.hasAudioBuffer) {
       log('Audio SourceBuffer created', 'success');
-      prevContext.hasAudioBuffer = true;
+      prevOwners.hasAudioBuffer = true;
 
-      const origRemove = ctx.audioBuffer.remove.bind(ctx.audioBuffer);
-      ctx.audioBuffer.remove = (start: number, end: number) => {
+      const origRemove = owners.audioBuffer.remove.bind(owners.audioBuffer);
+      owners.audioBuffer.remove = (start: number, end: number) => {
         log(
           `🔊 Audio SourceBuffer.remove(${start.toFixed(2)}s → ${end === Infinity ? '∞' : end.toFixed(2)}s)`,
           'warning'
@@ -385,8 +376,8 @@ function startEngine(src: string) {
         return origRemove(start, end);
       };
 
-      ctx.audioBuffer.addEventListener('updateend', () => {
-        const buf = engine.context.audioBuffer.get();
+      owners.audioBuffer.addEventListener('updateend', () => {
+        const buf = engine.owners.get().audioBuffer;
         if (!buf) return;
         const ranges: string[] = [];
         for (let i = 0; i < buf.buffered.length; i++) {
@@ -400,11 +391,11 @@ function startEngine(src: string) {
   cleanupEffects = () => {
     stopStateLogger();
     stopStateUI();
-    stopContextLogger();
+    stopOwnersLogger();
   };
 
   log('✓ Engine created', 'success');
-  log('Exposed as window.engine / window.signals / window.state() / window.context()');
+  log('Exposed as window.engine / window.state() / window.owners()');
   log('✓ Reactive effects active', 'success');
 
   // ── Wire media element ──────────────────────────────────────────────────────
@@ -412,8 +403,8 @@ function startEngine(src: string) {
   // effect picks up the user-selected value rather than the hardcoded "none"
   // from the HTML.
   video.preload = preloadSelect.value as 'auto' | 'metadata' | 'none';
-  signals.context.mediaElement.set(video);
-  signals.state.presentation.set({ url: src });
+  engine.owners.set({ mediaElement: video });
+  engine.state.set({ ...engine.state.get(), presentation: { url: src } });
 
   log('✓ Orchestration started', 'success');
 
@@ -470,7 +461,7 @@ autoplayToggle.addEventListener('change', () => {
 
 preloadSelect.addEventListener('change', () => {
   const value = preloadSelect.value as 'auto' | 'metadata' | 'none';
-  signals.state.preload.set(value);
+  engine.state.set({ ...engine.state.get(), preload: value });
   log(`Preload: ${value}`);
   updateShareUrl();
 });

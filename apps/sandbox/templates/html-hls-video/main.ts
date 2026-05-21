@@ -32,7 +32,7 @@ async function render() {
   document.getElementById('root')!.innerHTML = html`
     <${playerTag}>
       <${tag} class="aspect-video max-w-4xl mx-auto">
-        <hls-video src="${SOURCES[state.source].url}" ${mediaAttrs} playsinline crossorigin="anonymous">
+        <hls-video src="${SOURCES[state.source].url}" ${mediaAttrs} playsinline crossorigin="anonymous" rates="0.5 5 2">
           ${renderStoryboard(storyboard)}
         </hls-video>
         ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}

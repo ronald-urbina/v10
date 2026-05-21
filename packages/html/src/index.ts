@@ -70,6 +70,7 @@ export { PlaybackRateButtonElement } from './ui/playback-rate-button/playback-ra
 export { PlaybackRateMenuElement } from './ui/playback-rate-menu/playback-rate-menu-element';
 export { PlaybackRateMenuTriggerElement } from './ui/playback-rate-menu/playback-rate-menu-trigger-element';
 export { PlaybackRateOptionsElement } from './ui/playback-rate-menu/playback-rate-options-element';
+export { PlaybackRatesElement } from './ui/playback-rates/playback-rates-element';
 export { PopoverElement } from './ui/popover/popover-element';
 export { PosterElement } from './ui/poster/poster-element';
 export { SeekButtonElement } from './ui/seek-button/seek-button-element';
